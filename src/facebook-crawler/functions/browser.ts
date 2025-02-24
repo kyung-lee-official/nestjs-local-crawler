@@ -1,8 +1,6 @@
-import { InternalServerErrorException } from "@nestjs/common";
 import puppeteer, { Browser } from "puppeteer";
 
 export const launchBrowser = async (): Promise<Browser> => {
-	let browser: Browser;
 	const enableProxy = !!(
 		process.env.PROXY_PROTOCOL &&
 		process.env.PROXY_HOST &&
@@ -10,7 +8,7 @@ export const launchBrowser = async (): Promise<Browser> => {
 	);
 
 	try {
-		browser = await puppeteer.launch({
+		const browser: Browser = await puppeteer.launch({
 			headless: false,
 			executablePath: process.env.CHROME_EXECUTABLE_PATH,
 			userDataDir: process.env.CHROME_USER_DATA_DIR,
@@ -22,8 +20,11 @@ export const launchBrowser = async (): Promise<Browser> => {
 				: [`--profile-directory=${process.env.CHROME_PROFILE_NAME}`],
 			devtools: true,
 		});
+		return browser;
 	} catch (error) {
-		throw new InternalServerErrorException(error);
+		console.error(
+			"Error launching browser, make sure your Chrome is not running:"
+		);
+		throw error;
 	}
-	return browser;
 };
