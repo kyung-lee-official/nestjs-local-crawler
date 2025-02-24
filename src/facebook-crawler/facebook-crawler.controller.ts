@@ -1,9 +1,10 @@
 import { Body, Controller, Get, Post } from "@nestjs/common";
 import { FacebookCrawlerService } from "./facebook-crawler.service";
-import { ApiOperation, ApiTags } from "@nestjs/swagger";
+import { ApiBody, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { StartDto, startSchema } from "./dto/start.dto";
 import { CrawlDto, crawlSchema } from "./dto/crawl.dto";
 import { ZodValidationPipe } from "src/pipes/zod-validation.pipe";
+import { createCrawlerTaskBodyOptions } from "./swagger/start-crawler-task.swagger";
 
 @ApiTags("Facebook Crawler")
 @Controller("facebook-crawler")
@@ -13,6 +14,7 @@ export class FacebookCrawlerController {
 	) {}
 
 	@ApiOperation({ summary: "Start the crawler program" })
+	@ApiBody(createCrawlerTaskBodyOptions)
 	@Post("start")
 	async start(
 		@Body(new ZodValidationPipe(startSchema))
