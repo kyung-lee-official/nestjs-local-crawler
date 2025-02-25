@@ -15,12 +15,12 @@ export class FacebookCrawlerController {
 
 	@ApiOperation({ summary: "Start the crawler program" })
 	@ApiBody(createCrawlerTaskBodyOptions)
-	@Post("start")
-	async start(
+	@Post("create")
+	async create(
 		@Body(new ZodValidationPipe(startSchema))
 		crawlDto: StartDto
 	) {
-		return await this.facebookCrawlerService.start(crawlDto);
+		return await this.facebookCrawlerService.create(crawlDto);
 	}
 
 	@ApiOperation({ summary: "Crawl the data, one datum per request" })
@@ -34,13 +34,13 @@ export class FacebookCrawlerController {
 
 	@ApiOperation({ summary: "Abort the program" })
 	@Post("abort")
-	async abort() {
-		return await this.facebookCrawlerService.abort();
+	abort() {
+		return this.facebookCrawlerService.abort();
 	}
 
 	@ApiOperation({ summary: "Get the status of the program" })
 	@Get("get-status")
-	async getStatus() {
-		return await this.facebookCrawlerService.getStatus();
+	getStatus() {
+		return this.facebookCrawlerService.getStatus();
 	}
 }

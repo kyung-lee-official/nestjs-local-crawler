@@ -5,35 +5,89 @@ import { StartDto } from "./dto/start.dto";
 import { FacebookGroupCrawlRes } from "./res/facebook-group-crawl.res";
 import { parseHumanReadableNumber } from "src/utils/parse-human-readable-number";
 
-export class FacebookCrawler {
-	public shouldAbort: boolean = false;
-	public taskId: number;
+type Status = {
+	pendingAbort: boolean;
+	browserRunning: boolean;
+	taskId: number | null;
+	crawledDatum?: FacebookGroupCrawlRes;
+};
 
-	private browser: Browser;
-	private page: Page;
-	private isBrowserLaunched: boolean = false;
-	private crawlDto: CrawlDto;
+export class FacebookCrawler {
+	public pendingAbort: boolean = false;
+	public browserRunning: boolean = false;
+	public taskId: number | null;
+
+	private browser: Browser | null;
+	private page: Page | null;
 
 	constructor() {}
 
-	async start(startDto: StartDto) {
-		if (!this.isBrowserLaunched) {
-			this.browser = await launchBrowser();
-			this.page = await this.browser.newPage();
-			await this.page.setViewport({ width: 1920, height: 1080 });
-			this.taskId = startDto.taskId;
-			this.isBrowserLaunched = true;
-		}
-		return { status: "started" };
+	async create(startDto: StartDto): Promise<Status> {
+		this.browser = await launchBrowser();
+		this.page = await this.browser.newPage();
+		await this.page.setViewport({ width: 1920, height: 1080 });
+		this.taskId = startDto.taskId;
+		this.browserRunning = true;
+		this.loop();
+		return {
+			pendingAbort: this.pendingAbort,
+			browserRunning: this.browserRunning,
+			taskId: this.taskId,
+		};
 	}
 
-	async crawl(crawlDto: CrawlDto) {
-		if (this.shouldAbort) {
-			return { status: "aborted" };
+	async loop() {
+		if (this.pendingAbort) {
+			if (this.browser) {
+				try {
+					await this.page.close();
+					await this.browser.close();
+					this.page = null;
+					this.browser = null;
+					this.browserRunning = false;
+					this.taskId = null;
+					this.pendingAbort = false;
+					console.log("Browser closed gracefully.");
+				} catch (error) {
+					console.error("Error closing browser:", error);
+				}
+			}
+		}
+		setTimeout(() => {
+			this.loop();
+		}, 1500);
+	}
+
+	async crawl(crawlDto: CrawlDto): Promise<Status> {
+		if (this.pendingAbort) {
+			try {
+				await this.page.close();
+				await this.browser.close();
+				this.page = null;
+				this.browser = null;
+				this.browserRunning = false;
+				this.taskId = null;
+				this.pendingAbort = false;
+				console.log("Browser closed gracefully.");
+			} catch (error) {
+				console.error("Error closing browser:", error);
+			}
+			return {
+				pendingAbort: this.pendingAbort,
+				browserRunning: this.browserRunning,
+				taskId: this.taskId,
+			};
 		}
 
-		this.crawlDto = crawlDto;
-		const groupAddress = this.crawlDto.sourceData.groupAddress;
+		if (!this.browser) {
+			return {
+				pendingAbort: this.pendingAbort,
+				browserRunning: this.browserRunning,
+				taskId: this.taskId,
+			};
+		}
+
+		const groupAddress = crawlDto.sourceData.groupAddress;
 		try {
 			await this.page.goto(`${groupAddress}/about`, { timeout: 15000 });
 			await this.page.waitForSelector("h1 span > a"); /* Group Name */
@@ -168,7 +222,12 @@ export class FacebookCrawler {
 				memberCount: parseHumanReadableNumber(memberCount),
 				monthlyPostCount: parseHumanReadableNumber(monthlyPostCount),
 			};
-			return crawledDatum;
+			return {
+				pendingAbort: this.pendingAbort,
+				browserRunning: this.browserRunning,
+				taskId: this.taskId,
+				crawledDatum: crawledDatum,
+			};
 		} catch (error) {
 			if (error.name === "TimeoutError") {
 				console.error(error);
@@ -182,9 +241,20 @@ export class FacebookCrawler {
 		}
 	}
 
-	async abort() {
-		await this.browser.close();
-		this.isBrowserLaunched = false;
-		this.shouldAbort = true;
+	abort(): Status {
+		this.pendingAbort = true;
+		return {
+			pendingAbort: this.pendingAbort,
+			browserRunning: this.browserRunning,
+			taskId: this.taskId,
+		};
+	}
+
+	getStatus(): Status {
+		return {
+			pendingAbort: this.pendingAbort,
+			browserRunning: this.browserRunning,
+			taskId: this.taskId,
+		};
 	}
 }

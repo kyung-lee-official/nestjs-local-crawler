@@ -10,41 +10,49 @@ export class FacebookCrawlerService {
 
 	constructor() {}
 
-	async start(crawlDto: StartDto) {
+	async create(crawlDto: StartDto) {
 		/* only one instance allowed */
-		if (this.programInstance) {
-			throw new BadRequestException("Program already running.");
+		if (!this.programInstance) {
+			/* no instance yet, create one */
+			this.programInstance = new FacebookCrawler();
+			return await this.programInstance.create(crawlDto);
+		} else {
+			/* instance already exists, check browser status */
+			if (this.programInstance.browserRunning) {
+				throw new BadRequestException("Browser already running.");
+			} else {
+				/* instance exists, but browser is not running, start it */
+				return await this.programInstance.create(crawlDto);
+			}
 		}
-
-		/* initialize your time-consuming program instance here */
-		this.programInstance = new FacebookCrawler();
-		return await this.programInstance.start(crawlDto);
 	}
 
 	async crawl(crawlDto: CrawlDto) {
 		/* ensure there is an instance */
 		if (!this.programInstance) {
-			throw new BadRequestException("Program not running.");
+			throw new BadRequestException("Crawler not running.");
 		}
 		const crawlRes = await this.programInstance.crawl(crawlDto);
 		return crawlRes;
 	}
 
-	async abort() {
+	abort() {
 		/* ensure there is an instance */
 		if (!this.programInstance) {
-			throw new BadRequestException("Program not running.");
+			throw new BadRequestException("Crawler not running.");
 		}
-		await this.programInstance.abort();
-		this.programInstance = null;
-		return { status: "aborted" };
+		return this.programInstance.abort();
 	}
 
-	async getStatus() {
-		if (this.programInstance) {
-			return { running: true, taskId: this.programInstance.taskId };
-		} else {
-			return { running: false };
+	getStatus() {
+		/* ensure there is an instance */
+		if (!this.programInstance) {
+			return {
+				pendingAbort: false,
+				browserRunning: false,
+				taskId: null,
+			};
 		}
+		return this.programInstance.getStatus();
 	}
 }
