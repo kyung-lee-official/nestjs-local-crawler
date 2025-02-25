@@ -15,12 +15,12 @@ export class FacebookCrawlerController {
 
 	@ApiOperation({ summary: "Start the crawler program" })
 	@ApiBody(createCrawlerTaskBodyOptions)
-	@Post("create")
-	async create(
+	@Post("launch")
+	async launch(
 		@Body(new ZodValidationPipe(startSchema))
 		crawlDto: StartDto
 	) {
-		return await this.facebookCrawlerService.create(crawlDto);
+		return await this.facebookCrawlerService.launch(crawlDto);
 	}
 
 	@ApiOperation({ summary: "Crawl the data, one datum per request" })

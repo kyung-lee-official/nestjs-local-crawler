@@ -22,7 +22,7 @@ export class FacebookCrawler {
 
 	constructor() {}
 
-	async create(startDto: StartDto): Promise<Status> {
+	async launch(startDto: StartDto): Promise<Status> {
 		this.browser = await launchBrowser();
 		this.page = await this.browser.newPage();
 		await this.page.setViewport({ width: 1920, height: 1080 });
@@ -88,6 +88,7 @@ export class FacebookCrawler {
 		}
 
 		const groupAddress = crawlDto.sourceData.groupAddress;
+		const groupName = crawlDto.sourceData.groupName;
 		try {
 			await this.page.goto(`${groupAddress}/about`, { timeout: 15000 });
 			await this.page.waitForSelector("h1 span > a"); /* Group Name */
@@ -219,6 +220,7 @@ export class FacebookCrawler {
 				taskId: this.taskId,
 				groupAddress: groupAddress,
 				groupName: groupName,
+				failed: false,
 				memberCount: parseHumanReadableNumber(memberCount),
 				monthlyPostCount: parseHumanReadableNumber(monthlyPostCount),
 			};
@@ -238,6 +240,20 @@ export class FacebookCrawler {
 			} else {
 				console.error("An unexpected error occurred: ", error);
 			}
+			const crawledDatum: FacebookGroupCrawlRes = {
+				taskId: this.taskId,
+				groupAddress: groupAddress,
+				groupName: groupName,
+				failed: true,
+				memberCount: 0,
+				monthlyPostCount: 0,
+			};
+			return {
+				pendingAbort: this.pendingAbort,
+				browserRunning: this.browserRunning,
+				taskId: this.taskId,
+				crawledDatum: crawledDatum,
+			};
 		}
 	}
 

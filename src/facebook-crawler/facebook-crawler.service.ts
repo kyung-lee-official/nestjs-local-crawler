@@ -10,19 +10,19 @@ export class FacebookCrawlerService {
 
 	constructor() {}
 
-	async create(crawlDto: StartDto) {
+	async launch(crawlDto: StartDto) {
 		/* only one instance allowed */
 		if (!this.programInstance) {
 			/* no instance yet, create one */
 			this.programInstance = new FacebookCrawler();
-			return await this.programInstance.create(crawlDto);
+			return await this.programInstance.launch(crawlDto);
 		} else {
 			/* instance already exists, check browser status */
 			if (this.programInstance.browserRunning) {
 				throw new BadRequestException("Browser already running.");
 			} else {
 				/* instance exists, but browser is not running, start it */
-				return await this.programInstance.create(crawlDto);
+				return await this.programInstance.launch(crawlDto);
 			}
 		}
 	}

@@ -7,6 +7,7 @@ export const facebookgroupcrawlSchema = z.object({
 		.url()
 		.regex(/facebook.com\/groups\/[a-zA-Z0-9\.]+$/g),
 	groupName: z.string(),
+	failed: z.boolean(),
 	memberCount: z.number().int(),
 	monthlyPostCount: z.number().int(),
 });
