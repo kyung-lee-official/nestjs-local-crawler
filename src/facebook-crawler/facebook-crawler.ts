@@ -216,18 +216,23 @@ export class FacebookCrawler {
 					return "0";
 				}
 			});
+			const parsedMemberCount = parseHumanReadableNumber(memberCount);
+			const parsedMonthlyPostCount =
+				parseHumanReadableNumber(monthlyPostCount);
 			const crawledDatum: FacebookGroupCrawlRes = {
 				taskId: this.taskId,
 				groupAddress: groupAddress,
 				groupName: groupName,
 				failed:
-					parseHumanReadableNumber(memberCount) &&
-					parseHumanReadableNumber(monthlyPostCount)
-						? false
-						: true,
-				memberCount: parseHumanReadableNumber(memberCount) || 0,
+					parsedMemberCount === null ||
+					parsedMonthlyPostCount === null
+						? true
+						: false,
+				memberCount: parsedMemberCount === null ? 0 : parsedMemberCount,
 				monthlyPostCount:
-					parseHumanReadableNumber(monthlyPostCount) || 0,
+					parsedMonthlyPostCount === null
+						? 0
+						: parsedMonthlyPostCount,
 			};
 			return {
 				pendingAbort: this.pendingAbort,
