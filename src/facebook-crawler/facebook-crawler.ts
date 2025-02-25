@@ -220,9 +220,14 @@ export class FacebookCrawler {
 				taskId: this.taskId,
 				groupAddress: groupAddress,
 				groupName: groupName,
-				failed: false,
-				memberCount: parseHumanReadableNumber(memberCount),
-				monthlyPostCount: parseHumanReadableNumber(monthlyPostCount),
+				failed:
+					parseHumanReadableNumber(memberCount) &&
+					parseHumanReadableNumber(monthlyPostCount)
+						? false
+						: true,
+				memberCount: parseHumanReadableNumber(memberCount) || 0,
+				monthlyPostCount:
+					parseHumanReadableNumber(monthlyPostCount) || 0,
 			};
 			return {
 				pendingAbort: this.pendingAbort,
