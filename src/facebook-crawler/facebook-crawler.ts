@@ -223,11 +223,11 @@ export class FacebookCrawler {
 				taskId: this.taskId,
 				groupAddress: groupAddress,
 				groupName: groupName,
-				failed:
+				status:
 					parsedMemberCount === null ||
 					parsedMonthlyPostCount === null
-						? true
-						: false,
+						? "FAILED"
+						: "SUCCESS",
 				memberCount: parsedMemberCount === null ? 0 : parsedMemberCount,
 				monthlyPostCount:
 					parsedMonthlyPostCount === null
@@ -254,7 +254,7 @@ export class FacebookCrawler {
 				taskId: this.taskId,
 				groupAddress: groupAddress,
 				groupName: groupName,
-				failed: true,
+				status: "FAILED",
 				memberCount: 0,
 				monthlyPostCount: 0,
 			};
